@@ -26,7 +26,7 @@ resource "null_resource" "ansible_inventory" {
     template_rendered = data.template_file.ansible_vars.rendered
   }
   provisioner "local-exec" {
-    command = "cat > ansible_inventory <<EOL\n${data.template_file.ansible_vars.rendered}\nEOL"
+    command = "cat > ../ansible_inventory <<EOL\n${data.template_file.ansible_vars.rendered}\nEOL"
   }
 }
 
