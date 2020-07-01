@@ -1,0 +1,25 @@
+
+[wg]
+${wgserver_public} ansible_user=ubuntu ssh_private_key_file=${aws_region}
+[wg:vars]
+ansible_python_interpreter=/usr/bin/python3
+
+[webpub]
+${webpub_public} ansible_user=ubuntu ssh_private_key_file=${aws_region}
+[webpub:vars]
+ansible_python_interpreter=/usr/bin/python3
+
+[webpriv]
+${webpriv_private} ansible_user=ubuntu ssh_private_key_file=${aws_region}
+[dbpriv]
+${dbpriv_private}  ansible_user=ubuntu ssh_private_key_file=${aws_region}
+
+[priv:children]
+webpriv
+dbpriv
+
+[priv:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q ubuntu@${wgserver_public}"'
+
+

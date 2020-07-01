@@ -1,0 +1,4 @@
+---
+create_user: sammy
+copy_local_key: "{{ lookup('file', create_user + '.pub') }}"
+sys_packages: [ 'curl', 'vim', 'git', 'ufw']

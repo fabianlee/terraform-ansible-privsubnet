@@ -1,0 +1,72 @@
+##################################################
+# DO Community Playbooks: Apache on Ubuntu 18.04
+##################################################
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars/default.yml
+
+  tasks:
+    - name: Install prerequisites
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      loop: [ 'aptitude' ]
+
+    - name: Add Wireguard ppa
+      apt_repository:
+        repo: ppa:wireguard/wireguard
+        state: present
+        update_cache: True
+        validate_certs: False
+
+    - name: Install wireguard packages
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      loop: [ 'wireguard','iptables','resolvconf',"linux-headers-{{ ansible_kernel }}"]
+
+    - name: checkuptime1
+      shell: uptime
+      register: uptime1
+    - debug: msg={{uptime1.stdout}}
+
+    - name: test wireguard kernel module
+      become: true
+      shell: modprobe wireguard  && lsmod | grep wireguard | wc -l
+      #ignore_errors: true
+      register: wireguard_module_test
+
+    - name: show wireguard kernel module test
+      debug:
+        msg: "{{wireguard_module_test.stdout}}"
+
+    - name: wireguard kernel module is already loaded
+      shell: echo the result was one
+      when: wireguard_module_test.stdout|int > 0
+
+    - name: If wireguard kernel module is not loaded then REBOOT
+      shell: "sleep 5 && reboot"
+      when: wireguard_module_test.stdout|int == 0
+      become: true
+      async: 10
+      poll: 0 # fire and forget, playbook will continue
+
+    # https://www.middlewareinventory.com/blog/ansible_wait_for_reboot_to_complete/
+    # not using ansible 'reboot' module because it is unconditional, we want when support
+    - name: wait for host reboot to finish
+      wait_for:
+        port: "{{ (ansible_port|default(ansible_ssh_port))|default(22) }}"
+        host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+        search_regex: OpenSSH
+        delay: 20 # do not check for 20 seconds
+        timeout: 120
+      connection: local
+
+    - name: checkuptime2
+      shell: uptime
+      register: uptime2
+    - debug: msg={{uptime2.stdout}}
+
+    - name: "UFW - Allow Wireguard on port {{ wireguard_port }}"
+      ufw:
+        rule: allow
+        port: "{{ wireguard_port }}"
+        proto: tcp

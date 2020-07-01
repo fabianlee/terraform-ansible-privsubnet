@@ -1,0 +1,5 @@
+.terraform/
+*us-east*
+*us-west*
+allvals.properties
+ansible_inventory

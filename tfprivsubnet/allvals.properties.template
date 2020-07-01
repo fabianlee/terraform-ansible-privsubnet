@@ -1,0 +1,13 @@
+aws_region=${aws_region}
+
+vpc_cidr=${vpc_cidr}
+vpc_cidr_prefix=${vpc_cidr_prefix}
+other_vpc_cidr=${other_vpc_cidr}
+
+subnet_cidr_public=${subnet_cidr_public}
+subnet_cidr_private=${subnet_cidr_private}
+
+wgserver_public=${wgserver_public}
+webpub_public=${webpub_public}
+webpriv_privat=${webpriv_private}
+dbpriv_private=${dbpriv_private}

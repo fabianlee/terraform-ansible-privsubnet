@@ -1,0 +1,12 @@
+---
+#MySQL Settings
+mysql_root_password: "mysql_root_password"
+mysql_db: "wordpress"
+mysql_user: "sammy"
+mysql_password: "password"
+mysql_port: 3306
+mysql_bind_address: 127.0.0.1
+mysql_allow_remote_cidr:
+  - '%'
+  - '172.17.%'
+  - '172.18.%'

@@ -1,0 +1,116 @@
+#########################################################
+# Mariadb
+#########################################################
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars/default.yml
+
+  tasks:
+    - name: Install prerequisites
+      apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
+
+    - name: Install MariaDB Packages
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [ 'mariadb-server','mariadb-client','python3-mysqldb' ]
+
+
+    - name: Set the root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      tags: [ mysql, mysql-root ]
+
+#    - name: Remove all anonymous user accounts
+#      mysql_user:
+#        name: ''
+#        host_all: yes
+#        state: absent
+#        login_user: root
+#        login_password: "{{ mysql_root_password }}"
+#      tags: [ mysql ]
+#
+#    - name: Remove the MySQL test database
+#      mysql_db:
+#        name: test
+#        state: absent
+#        login_user: root
+#        login_password: "{{ mysql_root_password }}"
+#      tags: [ mysql ]
+
+    - name: Creates database for WordPress
+      mysql_db:
+        name: "{{ mysql_db }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      tags: [ mysql ]
+
+    - name: Create MySQL user for WordPress
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_db }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+    - name: Append privileges for MySQL user
+      mysql_user:
+        #host: '%'
+        host: "{{item}}"
+        user: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_db }}.*:ALL"
+        state: present
+        append_privs: yes
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      with_items: 
+        - "{{ mysql_allow_remote_cidr }}"
+        #  - '%'
+        #  - '172.17.%'
+
+      tags: [ mysql ]
+
+    - name: Create MariaDB main configuration file
+      template:
+        src=files/50-server.cnf
+        dest=/etc/mysql/mariadb.conf.d/50-server.cnf
+        owner=root
+        group=root
+        mode=0644
+      tags: [ mysql ]
+      notify: Restart MariaDB
+
+  # UFW Configuration
+    - name: "UFW - Allow sql on port {{ mysql_port }}"
+      ufw:
+        rule: allow
+        port: "{{ mysql_port }}"
+        proto: tcp
+      tags: [ mysql ]
+
+    - name: Test sql from client
+      shell: mysql -h localhost -u {{mysql_user|quote}} -p{{mysql_password|quote}} -e "show databases;"
+      register: mysqlclient_result
+    - name: show mysql client results
+      debug:
+        var: mysqlclient_result.stdout_lines
+
+    - name: show mysql user privilegs
+      becomes: root
+      shell: mysql -h localhost -u root -e "use information_schema;select * from information_schema.user_privileges;"
+      register: mysqlpriv_result
+    - name: show mysql privileges results
+      debug:
+        var: mysqlpriv_result.stdout_lines
+
+  handlers:
+    - name: Restart MariaDB
+      service:
+        name: mariadb
+        state: restarted
+
+
