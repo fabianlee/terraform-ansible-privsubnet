@@ -40,9 +40,15 @@ data "template_file" "ansible_allvals" {
   ]
   vars = {
     wgserver_public = aws_instance.wgserver.public_ip
+    wgserver_private = aws_instance.wgserver.private_ip
+
     webpub_public = aws_instance.webpub.public_ip
+    webpub_private = aws_instance.webpub.private_ip
+
     webpriv_private = aws_instance.webpriv.private_ip
+
     dbpriv_private = aws_instance.dbpriv.private_ip
+
     aws_region = var.aws_region
     vpc_cidr = var.vpc_cidr
     # grab first 2 octets

@@ -1,25 +1,37 @@
 
-[wg]
-${wgserver_public} ansible_user=ubuntu ssh_private_key_file=${aws_region}
-[wg:vars]
-ansible_python_interpreter=/usr/bin/python3
+# host with aliases
+wgserver ansible_host=${wgserver_public}
+webpub ansible_host=${webpub_public}
+webpriv ansible_host=${webpriv_private}
+dbpriv ansible_host=${dbpriv_private}
 
-[webpub]
-${webpub_public} ansible_user=ubuntu ssh_private_key_file=${aws_region}
-[webpub:vars]
-ansible_python_interpreter=/usr/bin/python3
 
-[webpriv]
-${webpriv_private} ansible_user=ubuntu ssh_private_key_file=${aws_region}
-[dbpriv]
-${dbpriv_private}  ansible_user=ubuntu ssh_private_key_file=${aws_region}
+[wireguard]
+wgserver
 
-[priv:children]
+[apache]
+wgserver
+webpub
+webpriv
+
+[wordpress]
+webpub
+
+[database]
+dbpriv
+
+[needbastion]
 webpriv
 dbpriv
 
-[priv:vars]
-ansible_python_interpreter=/usr/bin/python3
+
+[all:vars]
+# bring this in from group_vars/all instead
+#ansible_python_interpreter=/usr/bin/python3
+ansible_user=ubuntu
+ssh_private_key_file=${aws_region}
+
+[needbastion:vars]
 ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q ubuntu@${wgserver_public}"'
 
 

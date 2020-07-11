@@ -8,6 +8,8 @@ subnet_cidr_public=${subnet_cidr_public}
 subnet_cidr_private=${subnet_cidr_private}
 
 wgserver_public=${wgserver_public}
+wgserver_private=${wgserver_private}
 webpub_public=${webpub_public}
+webpub_private=${webpub_private}
 webpriv_privat=${webpriv_private}
 dbpriv_private=${dbpriv_private}
